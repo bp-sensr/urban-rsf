@@ -102,6 +102,11 @@ river_creek <- raster("/users/alexandremacphail/desktop/coe_geospatial/COE_Dista
 # Distance to North Saskatchewan River only
 sask_river <- raster("/users/alexandremacphail/desktop/coe_geospatial/nsask_dist.tif")
 
+
+
+
+###### Function and use
+
 wt_rsf <- function(projects = c(1750, 4581, 4559, 3778, 4572, 4575), species) {
 
   # Load in used/unused data
@@ -200,14 +205,11 @@ wt_rsf <- function(projects = c(1750, 4581, 4559, 3778, 4572, 4575), species) {
 
   # Scale all variables
   scale_vars <- c("n", "HIGH_DEV", "MID_DEV", "MOD", "MOD_MG", "NAT_LAND", "NAT_WATER", "NAW", "NNW", "VAR_DEV", "WET", "ANT", "FIL", "noise_db", "connectivity", "river.dist", "creek.dist")
-
   rsf_ready1 <- rsf_ready1 |>
     ungroup() |>
     mutate(across(all_of(scale_vars), as.numeric))
-
   rsf_ready2 <- rsf_ready1 |>
     mutate(across(all_of(scale_vars), ~ as.numeric(scale(.x))))
-
   rsf_ready3 <- rsf_ready2 |>
     group_by(location) |>
     filter(presence == max(presence)) |>
@@ -232,6 +234,7 @@ wt_rsf <- function(projects = c(1750, 4581, 4559, 3778, 4572, 4575), species) {
   }
 
   # Adding in interactions
+  # NOTE: currently unused below (not plotted, predicted, or returned) — wire it in or remove
   mod_V2 <- glm(presence ~ -1 + MID_DEV + MOD_MG + NAT_LAND + NAW + NNW + river.dist + n + MOD * river.dist + NAT_LAND * river.dist + NAW * river.dist + NNW * river.dist, data = rsf_ready2, family = binomial(link = "logit"))
 
   # VIF check
@@ -240,12 +243,11 @@ wt_rsf <- function(projects = c(1750, 4581, 4559, 3778, 4572, 4575), species) {
   #summary(mod_V1)
 
   # Odds ratio plots
-  odds_dredge <- plot_model(mod_V1, sort.est = TRUE,
-                            title = paste(species, "- Best Model"),
-                            vline.color = "transparent") +
+  odds_best <- plot_model(mod_V1, sort.est = TRUE,
+                          title = paste(species, "- Best Model"),
+                          vline.color = "transparent") +
     geom_hline(yintercept = 1, color = "black", linewidth = 1.5, linetype = "dashed") +
     font_size(title = 22, axis_title.x = 20, labels.x = 20, labels.y = 20)
-
   odds_full <- plot_model(mod, sort.est = TRUE,
                           title = paste(species, "- Full Model"),
                           vline.color = "transparent") +
@@ -261,12 +263,12 @@ wt_rsf <- function(projects = c(1750, 4581, 4559, 3778, 4572, 4575), species) {
   for (v in scale_vars) {base_map1[[v]] <- (base_map[[v]] - mean(rsf_ready1[[v]], na.rm = TRUE)) / sd(rsf_ready1[[v]], na.rm = TRUE)}
 
   # Maps ----
-  map.rsf <- predict(base_map1, mod, type = "response")
-  map.rsf1 <- predict(base_map1, mod_V1, type = "response")
+  map.rsf  <- predict(base_map1, mod, type = "response")     # from FULL model
+  map.rsf1 <- predict(base_map1, mod_V1, type = "response")  # from BEST/REDUCED model
 
-  return(list(full = map.rsf,
-              reduced = map.rsf1,
-              dredge_odds = odds_dredge,
+  return(list(full = map.rsf,        # Full model (all predictors)
+              reduced = map.rsf1,    # Best/reduced model (species-specific subset)
+              dredge_odds = odds_best,
               full_odds = odds_full,
               model_full = mod,
               model_reduced = mod_V1,
@@ -279,6 +281,6 @@ tres_rsf <- wt_rsf(species = "TRES")
 cawa_rsf <- wt_rsf(species = "CAWA")
 yewa_rsf <- wt_rsf(species = "YEWA")
 
-# To plot
+# To plot RSF best model
 #plot(bans_rsf[[1]])
 
