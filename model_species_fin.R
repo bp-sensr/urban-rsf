@@ -244,12 +244,12 @@ wt_rsf <- function(projects = c(1750, 4581, 4559, 3778, 4572, 4575), species) {
 
   # Odds ratio plots
   odds_best <- plot_model(mod_V1, sort.est = TRUE,
-                          title = paste(species, "- Best Model"),
+                          title = species,
                           vline.color = "transparent") +
     geom_hline(yintercept = 1, color = "black", linewidth = 1.5, linetype = "dashed") +
     font_size(title = 22, axis_title.x = 20, labels.x = 20, labels.y = 20)
   odds_full <- plot_model(mod, sort.est = TRUE,
-                          title = paste(species, "- Full Model"),
+                          title = species,
                           vline.color = "transparent") +
     geom_hline(yintercept = 1, color = "black", linewidth = 1.5, linetype = "dashed") +
     font_size(title = 22, axis_title.x = 20, labels.x = 20, labels.y = 20)
@@ -263,11 +263,11 @@ wt_rsf <- function(projects = c(1750, 4581, 4559, 3778, 4572, 4575), species) {
   for (v in scale_vars) {base_map1[[v]] <- (base_map[[v]] - mean(rsf_ready1[[v]], na.rm = TRUE)) / sd(rsf_ready1[[v]], na.rm = TRUE)}
 
   # Maps ----
-  map.rsf  <- predict(base_map1, mod, type = "response")     # from FULL model
-  map.rsf1 <- predict(base_map1, mod_V1, type = "response")  # from BEST/REDUCED model
+  map.rsf  <- predict(base_map1, mod, type = "response")
+  map.rsf1 <- predict(base_map1, mod_V1, type = "response")
 
-  return(list(full = map.rsf,        # Full model (all predictors)
-              reduced = map.rsf1,    # Best/reduced model (species-specific subset)
+  return(list(full = map.rsf,
+              reduced = map.rsf1,
               dredge_odds = odds_best,
               full_odds = odds_full,
               model_full = mod,
